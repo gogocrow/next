@@ -47,6 +47,40 @@ describe('Radio', () => {
         });
     });
 
+    describe('focus', () => {
+        it('simulate ref focus', () => {
+            class App extends React.Component {
+                constructor(props) {
+                    super(props);
+                    this.ref = null;
+                }
+                componentDidMount() {
+                    if (this.ref) {
+                        this.ref.focus();
+                    }
+                }
+                render() {
+                    return (
+                        <Radio
+                            ref={el => {
+                                if (el && typeof el.getInstance === 'function') {
+                                    this.ref = el.getInstance();
+                                }
+                            }}
+                        />
+                    );
+                }
+            }
+            document.body.focus();
+            const div = document.createElement('div');
+            document.body.appendChild(div);
+
+            ReactDOM.render(<App />, div);
+
+            assert(document.activeElement.tagName.toUpperCase() === 'INPUT');
+        });
+    });
+
     describe('behavior', () => {
         it('simulate click', () => {
             let wrapper;
