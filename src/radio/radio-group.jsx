@@ -118,6 +118,11 @@ class RadioGroup extends Component {
             value = props.defaultValue;
         }
 
+        // The reference for the first Radio and for the selected Radio.
+        this.firstRef = null;
+        this.selectedRef = null;
+        this.hasFocus = false;
+
         this.state = { value };
         this.onChange = this.onChange.bind(this);
     }
@@ -153,6 +158,29 @@ class RadioGroup extends Component {
         }
     }
 
+    focus() {
+        if (!this.hasFocus) {
+            if (this.selectedRef) {
+                this.selectedRef.focus();
+            } else if (this.firstRef) {
+                this.firstRef.focus();
+            }
+        }
+    }
+
+    saveRadioRef = (el, index) => {
+        if (el && typeof el.getInstance === 'function') {
+            const radio = el.getInstance();
+
+            if (index < 1) {
+                this.firstRef = radio;
+            }
+            if (radio.props.checked) {
+                this.selectedRef = radio;
+            }
+        }
+    };
+
     render() {
         const {
             rtl,
@@ -175,6 +203,7 @@ class RadioGroup extends Component {
 
         let children;
         const previewed = {};
+
         if (this.props.children) {
             children = React.Children.map(this.props.children, (child, index) => {
                 if (!React.isValidElement(child)) {
@@ -192,6 +221,9 @@ class RadioGroup extends Component {
                         checked,
                         tabIndex,
                         rtl: childrtl,
+                        ref: e => {
+                            this.saveRadioRef(e, index);
+                        },
                     });
                 }
                 return React.cloneElement(child, {
@@ -222,6 +254,9 @@ class RadioGroup extends Component {
                         checked={checked}
                         label={option.label}
                         disabled={disabled || option.disabled}
+                        ref={e => {
+                            this.saveRadioRef(e, index);
+                        }}
                     />
                 );
             });
@@ -257,7 +292,25 @@ class RadioGroup extends Component {
 
         const TagName = component;
         return (
-            <TagName {...others} aria-disabled={disabled} role="radiogroup" className={cls} style={style}>
+            <TagName
+                {...others}
+                aria-disabled={disabled}
+                role="radiogroup"
+                className={cls}
+                style={style}
+                onFocus={(...args) => {
+                    this.hasFocus = true;
+                    if (typeof this.props.onFocus === 'function') {
+                        this.props.onFocus(...args);
+                    }
+                }}
+                onBlur={(...args) => {
+                    this.hasFocus = false;
+                    if (typeof this.props.onBlur === 'function') {
+                        this.props.onBlur(...args);
+                    }
+                }}
+            >
                 {children}
             </TagName>
         );
