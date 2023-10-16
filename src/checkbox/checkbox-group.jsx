@@ -2,10 +2,12 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import { polyfill } from 'react-lifecycles-compat';
-import { obj } from '../util';
+import { obj, func, focus } from '../util';
 import Checkbox from './checkbox';
 
+const { focusRef } = focus;
 const { pickOthers } = obj;
+const { makeChain } = func;
 
 /** Checkbox.Group */
 class CheckboxGroup extends Component {
@@ -103,6 +105,8 @@ class CheckboxGroup extends Component {
             value: [...value],
         };
 
+        this.firstRef = null;
+
         this.onChange = this.onChange.bind(this);
     }
 
@@ -149,6 +153,21 @@ class CheckboxGroup extends Component {
         this.props.onChange(valTemp, e);
     }
 
+    focus() {
+        if (!this.hasFocus) {
+            const firstRef = this.checkboxRefs.find(({ props }) => !props.disabled);
+
+            focusRef(firstRef);
+        }
+    }
+
+    saveCheckboxRef(el, index) {
+        if (el && typeof el.getInstance === 'function') {
+            const checkbox = el.getInstance();
+            this.checkboxRefs[index] = checkbox;
+        }
+    }
+
     render() {
         const { className, style, prefix, disabled, direction, rtl, isPreview, renderPreview } = this.props;
         const others = pickOthers(CheckboxGroup.propTypes, this.props);
@@ -156,8 +175,11 @@ class CheckboxGroup extends Component {
         // 如果内嵌标签跟dataSource同时存在，以内嵌标签为主
         let children;
         const previewed = [];
+
+        this.checkboxRefs = [];
+
         if (this.props.children) {
-            children = React.Children.map(this.props.children, child => {
+            children = React.Children.map(this.props.children, (child, index) => {
                 if (!React.isValidElement(child)) {
                     return child;
                 }
@@ -169,8 +191,16 @@ class CheckboxGroup extends Component {
                         value: child.props.value,
                     });
                 }
+                const cloneProps = {};
 
-                return React.cloneElement(child, child.props.rtl === undefined ? { rtl } : null);
+                cloneProps.ref = el => {
+                    this.saveCheckboxRef(el, index);
+                };
+                if (child.props.rtl) {
+                    cloneProps.rtl = child.props.rtl;
+                }
+
+                return React.cloneElement(child, cloneProps);
             });
         } else {
             children = this.props.dataSource.map((item, index) => {
@@ -191,6 +221,12 @@ class CheckboxGroup extends Component {
                     });
                 }
 
+                const cloneProps = {};
+
+                cloneProps.ref = el => {
+                    this.saveCheckboxRef(el, index);
+                };
+
                 return (
                     <Checkbox
                         key={index}
@@ -199,6 +235,7 @@ class CheckboxGroup extends Component {
                         rtl={rtl}
                         disabled={disabled || option.disabled}
                         label={option.label}
+                        {...cloneProps}
                     />
                 );
             });
@@ -230,7 +267,24 @@ class CheckboxGroup extends Component {
         });
 
         return (
-            <span dir={rtl ? 'rtl' : undefined} {...others} className={cls} style={style}>
+            <span
+                dir={rtl ? 'rtl' : undefined}
+                {...others}
+                className={cls}
+                style={style}
+                onFocus={makeChain(
+                    function() {
+                        this.hasFocus = true;
+                    }.bind(this),
+                    this.props.onFocus
+                )}
+                onBlur={makeChain(
+                    function() {
+                        this.hasFocus = false;
+                    }.bind(this),
+                    this.props.onBlur
+                )}
+            >
                 {children}
             </span>
         );

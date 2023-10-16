@@ -1,5 +1,4 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 import Enzyme, { mount } from 'enzyme';
 import Adapter from 'enzyme-adapter-react-16';
 import sinon from 'sinon';
@@ -57,9 +56,7 @@ describe('Checkbox', () => {
         it('should has className `cumstom-name`', () => {
             const wrapper = mount(<Checkbox className="cumstom-name" />);
             assert(wrapper.props().className === 'cumstom-name');
-            assert(
-                wrapper.find('.next-checkbox-wrapper.cumstom-name').length === 1
-            );
+            assert(wrapper.find('.next-checkbox-wrapper.cumstom-name').length === 1);
         });
     });
 
@@ -67,9 +64,7 @@ describe('Checkbox', () => {
         const wrapper = mount(<Checkbox />);
 
         it('should checked after click', () => {
-            wrapper
-                .find('input')
-                .simulate('change', { target: { checked: true } });
+            wrapper.find('input').simulate('change', { target: { checked: true } });
             assert(wrapper.find('input').prop('checked'));
         });
         it('should call `onChange`', () => {
@@ -123,10 +118,35 @@ describe('Checkbox', () => {
         });
 
         it('should renderPreview', () => {
-            const wrapper = mount(
-                <Checkbox checked isPreview renderPreview={() => 'checked'} />
-            );
+            const wrapper = mount(<Checkbox checked isPreview renderPreview={() => 'checked'} />);
             assert(wrapper.getDOMNode().innerText === 'checked');
+        });
+    });
+
+    describe('[focus] call focus()', () => {
+        let wrapper, target;
+
+        beforeEach(() => {
+            target = document.createElement('div');
+            document.body.appendChild(target);
+        });
+
+        afterEach(() => {
+            target = null;
+            if (wrapper) {
+                wrapper.unmount();
+            }
+        });
+        it('should focus', async () => {
+            document.body.focus();
+            const wrapper = mount(<Checkbox />, {
+                attachTo: target,
+            });
+            const checkbox = wrapper.instance().getInstance();
+            checkbox.focus();
+
+            const inputElement = wrapper.find('input').getDOMNode();
+            assert(document.activeElement === inputElement);
         });
     });
 });

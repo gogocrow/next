@@ -12,8 +12,27 @@ export default function withContext(Checkbox) {
             prefix: PropTypes.string,
         };
 
+        constructor(props) {
+            super(props);
+            this.checkboxRef = null;
+        }
+
+        focus() {
+            if (this.checkboxRef) {
+                this.checkboxRef.focus();
+            }
+        }
+
         render() {
-            return <Checkbox {...this.props} context={this.context} />;
+            return (
+                <Checkbox
+                    {...this.props}
+                    context={this.context}
+                    ref={el => {
+                        this.checkboxRef = el;
+                    }}
+                />
+            );
         }
     };
 }

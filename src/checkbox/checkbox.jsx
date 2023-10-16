@@ -131,6 +131,8 @@ class Checkbox extends UIState {
             indeterminate,
         };
 
+        this.checkboxRef = null;
+
         this.onChange = this.onChange.bind(this);
     }
 
@@ -193,6 +195,13 @@ class Checkbox extends UIState {
         }
     }
 
+    focus() {
+        if (this.checkboxRef) {
+            this.checkboxRef.focus();
+            this._onUIFocus();
+        }
+    }
+
     render() {
         /* eslint-disable no-unused-vars */
         const {
@@ -234,6 +243,9 @@ class Checkbox extends UIState {
                 onChange={this.onChange}
                 aria-checked={indeterminate ? 'mixed' : checked}
                 className={`${prefix}checkbox-input`}
+                ref={el => {
+                    this.checkboxRef = el;
+                }}
             />
         );
 
